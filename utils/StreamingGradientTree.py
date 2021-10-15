@@ -1,3 +1,4 @@
+import math
 import numpy as np
 from utils.Statistics import Statistics
 from utils.GradHessStats import GradHessStats
@@ -75,7 +76,7 @@ class StreamingGradientTree:
         # HA: the expected loss is not zero
 
         try:
-            F = instances * np.power(split.lossMean, 2.0) / split.lossVariance
+            F = instances * math.pow(split.lossMean, 2.0) / split.lossVariance
             return Statistics().FProbability(F, 1, instances-1)
 
         except ArithmeticError:
@@ -163,7 +164,7 @@ class StreamingGradientTree:
                     if self.mHasSplit[i]:
                         continue
 
-                    candidate.deltaPredictions = np.zeros(len(self.mSplitStats[i]))
+                    candidate.deltaPredictions = list(np.zeros(len(self.mSplitStats[i])))
                     lossMean = 0.0
                     lossVar = 0.0
                     observations = 0
@@ -204,8 +205,8 @@ class StreamingGradientTree:
                             backwardCumulativeSum[j].add(backwardCumulativeSum[j + 1])
                         
 
-                    candidate.lossMean = np.inf
-                    candidate.deltaPredictions = np.zeros(2)
+                    candidate.lossMean = math.inf
+                    candidate.deltaPredictions = list(np.zeros(2))
 
                     for j in range(len(forwardCumulativeSum)):
                         deltaPredLeft = self.computeDeltaPrediction(forwardCumulativeSum[j].getMean())

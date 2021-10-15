@@ -1,5 +1,7 @@
 from StochasticGradientTree import StochasticGradientTreeRegressor
 
+import time
+
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_diabetes
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
@@ -8,9 +10,11 @@ def train(X, y):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.34)
         
-    tree = StochasticGradientTreeRegressor(batch_size=1)
+    tree = StochasticGradientTreeRegressor()
 
+    start = time.process_time()
     tree.fit(X_train, y_train)
+    print('Time taken: ', time.process_time() - start)
     
     y_pred = tree.predict(X_test)        
 

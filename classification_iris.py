@@ -1,5 +1,7 @@
 from StochasticGradientTree import StochasticGradientTreeClassifier
 
+import time
+
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
 from sklearn.multiclass import OneVsRestClassifier
@@ -20,7 +22,10 @@ if __name__ == '__main__':
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.34)
 
+    start = time.process_time()
     clf.fit(X_train,y_train)
+    print('Time taken: ', time.process_time() - start)
+    
     pred = clf.predict(X_test)
     
     print(accuracy_score(y_test, pred))

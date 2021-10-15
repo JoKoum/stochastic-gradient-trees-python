@@ -1,4 +1,4 @@
-import numpy as np
+import math
 
 class Statistics:
     def __init__(self):
@@ -13,32 +13,32 @@ class Statistics:
         self.big = 4.503599627370496E15
         self.biginv = 2.22044604925031308085E-16
 
-        self.P0 = np.array([-5.99633501014107895267E1, 9.80010754185999661536E1, 
+        self.P0 = [-5.99633501014107895267E1, 9.80010754185999661536E1, 
         -5.66762857469070293439E1, 1.39312609387279679503E1, 
-        -1.23916583867381258016E0])
-        self.Q0 = np.array([1.95448858338141759834E0, 4.67627912898881538453E0, 8.63602421390890590575E1, 
+        -1.23916583867381258016E0]
+        self.Q0 = [1.95448858338141759834E0, 4.67627912898881538453E0, 8.63602421390890590575E1, 
         -2.25462687854119370527E2, 2.00260212380060660359E2,
         -8.20372256168333339912E1, 1.59056225126211695515E1, 
-        -1.18331621121330003142E0])
+        -1.18331621121330003142E0]
 
-        self.P1 = np.array([4.05544892305962419923E0, 3.15251094599893866154E1, 5.71628192246421288162E1, 
+        self.P1 = [4.05544892305962419923E0, 3.15251094599893866154E1, 5.71628192246421288162E1, 
         4.40805073893200834700E1, 1.46849561928858024014E1, 
         2.18663306850790267539E0, -1.40256079171354495875E-1,
-        -3.50424626827848203418E-2, -8.57456785154685413611E-4])
-        self.Q1 = np.array([1.57799883256466749731E1, 4.53907635128879210584E1, 4.13172038254672030440E1, 
+        -3.50424626827848203418E-2, -8.57456785154685413611E-4]
+        self.Q1 = [1.57799883256466749731E1, 4.53907635128879210584E1, 4.13172038254672030440E1, 
         1.50425385692907503408E1, 2.50464946208309415979E0,
         -1.42182922854787788574E-1, -3.80806407691578277194E-2, 
-        -9.33259480895457427372E-4])
+        -9.33259480895457427372E-4]
 
-        self.P2 = np.array([3.23774891776946035970E0, 
+        self.P2 = [3.23774891776946035970E0, 
         6.91522889068984211695E0, 3.93881025292474443415E0,
         1.33303460815807542389E0, 2.01485389549179081538E-1,
         1.23716634817820021358E-2, 3.01581553508235416007E-4,
-        2.65806974686737550832E-6, 6.23974539184983293730E-9])
-        self.Q2 = np.array([6.02427039364742014255E0, 3.67983563856160859403E0, 
+        2.65806974686737550832E-6, 6.23974539184983293730E-9]
+        self.Q2 = [6.02427039364742014255E0, 3.67983563856160859403E0, 
         1.37702099489081330271E0, 2.16236993594496635890E-1, 
         1.34204006088543189037E-2, 3.28014464682127739104E-4, 
-        2.89247864745380683936E-6, 6.79019408009981274425E-9])
+        2.89247864745380683936E-6, 6.79019408009981274425E-9]
     
     @staticmethod
     def binomialStandardError(p, n):
@@ -51,7 +51,7 @@ class Statistics:
         if n == 0:
             return 0
         
-        return np.sqrt((p * (1 - p)) / n)
+        return math.sqrt((p * (1 - p)) / n)
     
     @staticmethod
     def chiSquaredProbability(x, v):
@@ -116,11 +116,11 @@ class Statistics:
         
         # Multiply w by the factor a b _ _ _ x (1-x) | (a+b) / ( a | (a) | (b) ) .
 
-        y = a * np.log(x)
-        t = b * np.log(xc)
-        if (a+b < self.MAXGAM) and (np.abs(y) < self.MAXLOG) and (np.abs(t) < self.MAXLOG):
-            t = np.power(xc, b)
-            t *= np.power(x, a)
+        y = a * math.log(x)
+        t = b * math.log(xc)
+        if (a+b < self.MAXGAM) and (abs(y) < self.MAXLOG) and (abs(t) < self.MAXLOG):
+            t = math.pow(xc, b)
+            t *= math.pow(x, a)
             t /= a
             t *= w
             t *= self.gamma(a + b) / (self.gamma(a) * self.gamma(b))
@@ -134,11 +134,11 @@ class Statistics:
         
         # Resort to logarithms.
         y += t + self.lnGamma(a + b) - self.lnGamma(a) - self.lnGamma(b)
-        y += np.log(w/a)
+        y += math.log(w/a)
         if y < self.MINLOG:
             t = 0.0
         else:
-            t = np.exp(y)
+            t = math.exp(y)
         
         if flag:
             if t <= self.MACHEP:
@@ -191,7 +191,7 @@ class Statistics:
                 r = pk / qk
             
             if (r != 0):
-                t = np.abs((ans - r) / r)
+                t = abs((ans - r) / r)
                 ans = r
             else:
                 t = 1.0
@@ -208,13 +208,13 @@ class Statistics:
             k7 += 2.0
             k8 += 2.0
             
-            if ((np.abs(qk) + np.abs(pk)) > self.big):
+            if ((abs(qk) + abs(pk)) > self.big):
                 pkm2 *= self.biginv
                 pkm1 *= self.biginv
                 qkm2 *= self.biginv
                 qkm1 *= self.biginv
             
-            if ((np.abs(qk) < self.biginv) or (np.abs(pk) < self.biginv)):
+            if ((abs(qk) < self.biginv) or (abs(pk) < self.biginv)):
                 pkm2 *= self.big
                 pkm1 *= self.big
                 qkm2 *= self.big
@@ -273,7 +273,7 @@ class Statistics:
                 r = pk / qk
             
             if (r != 0):
-                t = np.abs((ans - r) / r)
+                t = abs((ans - r) / r)
                 ans = r
             else:
                 t = 1.0
@@ -290,13 +290,13 @@ class Statistics:
             k7 += 2.0
             k8 += 2.0
             
-            if ((np.abs(qk) + np.abs(pk)) > self.big):
+            if ((abs(qk) + abs(pk)) > self.big):
                 pkm2 *= self.biginv
                 pkm1 *= self.biginv
                 qkm2 *= self.biginv
                 qkm1 *= self.biginv
             
-            if ((np.abs(qk) < self.biginv) or (np.abs(pk) < self.biginv)):
+            if ((abs(qk) < self.biginv) or (abs(pk) < self.biginv)):
                 pkm2 *= self.big
                 pkm1 *= self.big
                 qkm2 *= self.big
@@ -312,31 +312,31 @@ class Statistics:
         return ans
         
     def gamma(self, x):
-        P = np.array([1.60119522476751861407E-4, 1.19135147006586384913E-3,
+        P = [1.60119522476751861407E-4, 1.19135147006586384913E-3,
         1.04213797561761569935E-2, 4.76367800457137231464E-2,
         2.07448227648435975150E-1, 4.94214826801497100753E-1,
-        9.99999999999999996796E-1])
-        Q = np.array([-2.31581873324120129819E-5, 5.39605580493303397842E-4,
+        9.99999999999999996796E-1]
+        Q = [-2.31581873324120129819E-5, 5.39605580493303397842E-4,
         -4.45641913851797240494E-3, 1.18139785222060435552E-2,
         3.58236398605498653373E-2, -2.34591795718243348568E-1,
-        7.14304917030273074085E-2, 1.00000000000000000320E0])
+        7.14304917030273074085E-2, 1.00000000000000000320E0]
 
-        q = np.abs(x)
+        q = abs(x)
 
         if q > 33.0:
             if x < 0.0:
-                p = np.floor(q)
+                p = math.floor(q)
                 if p == q:
                     raise ArithmeticError("gamma: overflow")
                 z = q - p
                 if z > 0.5:
                     p += 1.0
                     z = q - p
-                z = q * np.sin(np.pi * z)
+                z = q * math.sin(math.pi * z)
                 if z == 0.0:
                     raise ArithmeticError("gamma: overflow")
-                z = np.abs(z)
-                z = np.pi / (z * self.stirlingFormula(q))
+                z = abs(z)
+                z = math.pi / (z * self.stirlingFormula(q))
 
                 return -z
             else:
@@ -403,22 +403,22 @@ class Statistics:
         Returns the Gamma function computed by Stirling's formula. The polynomial
         STIR is valid for 33 <= x <= 172.
         """
-        STIR = np.array([7.87311395793093628397E-4, -2.29549961613378126380E-4,
+        STIR = [7.87311395793093628397E-4, -2.29549961613378126380E-4,
         -2.68132617805781232825E-3, 3.47222221605458667310E-3,
-        8.33333333333482257126E-2])
+        8.33333333333482257126E-2]
         MAXSTIR = 143.01608
 
         w = 1.0 / x
-        y = np.exp(x)
+        y = math.exp(x)
 
         w = 1.0 + w * self.polevl(w, STIR, 4)
 
         if x > MAXSTIR:
             # Avoid overflow in math.pow()
-            v = np.power(x, 0.5 * x - 0.25)
+            v = math.pow(x, 0.5 * x - 0.25)
             y = v * (v / y)
         else:
-            y = np.power(x, x - 0.5) / y
+            y = math.pow(x, x - 0.5) / y
         
         y = self.SQTPI * y * w
         return y
@@ -429,20 +429,20 @@ class Statistics:
         x the value
         return natural logarithm of gamma function
         """
-        A = np.array([8.11614167470508450300E-4, -5.95061904284301438324E-4,
+        A = [8.11614167470508450300E-4, -5.95061904284301438324E-4,
         7.93650340457716943945E-4, -2.77777777730099687205E-3,
-        8.33333333333331927722E-2])
-        B = np.array([-1.37825152569120859100E3, -3.88016315134637840924E4,
+        8.33333333333331927722E-2]
+        B = [-1.37825152569120859100E3, -3.88016315134637840924E4,
         -3.31612992738871184744E5, -1.16237097492762307383E6,
-        -1.72173700820839662146E6, -8.53555664245765465627E5])
-        C = np.array([3.51815701436523470549E2, -1.70642106651881159223E4,
+        -1.72173700820839662146E6, -8.53555664245765465627E5]
+        C = [3.51815701436523470549E2, -1.70642106651881159223E4,
         -2.20528590553854454839E5, -1.13933444367982507207E6,
-        -2.53252307177582951285E6, -2.01889141433532773231E6])
+        -2.53252307177582951285E6, -2.01889141433532773231E6]
 
         if x < -34.0:
             q = -x
             w = self.lnGamma(q)
-            p = np.floor(q)
+            p = math.floor(q)
             if (p == q):
                 raise ArithmeticError("lnGamma: Overflow")
             
@@ -451,10 +451,10 @@ class Statistics:
                 p += 1.0
                 z = p - q
             
-            z = q * np.sin(np.pi * z)
+            z = q * math.sin(math.pi * z)
             if (z == 0.0):
                 raise ArithmeticError("lnGamma: Overflow")
-            z = self.LOGPI - np.log(z) - w
+            z = self.LOGPI - math.log(z) - w
             return z
         
         if (x < 13.0):
@@ -471,15 +471,15 @@ class Statistics:
             if (z < 0.0):
                 z = -z
             if (x == 2.0):
-                return np.log(z)
+                return math.log(z)
             x -= 2.0
             p = x * self.polevl(x, B, 5) / self.p1evl(x, C, 6)
-            return (np.log(z) + p)
+            return (math.log(z) + p)
         
         if (x > 2.556348e305):
             raise ArithmeticError("lnGamma: Overflow")
         
-        q = (x - 0.5) * np.log(x) - x + 0.91893853320467274178
+        q = (x - 0.5) * math.log(x) - x + 0.91893853320467274178
         
         if (x > 1.0e8):
             return q
@@ -528,7 +528,7 @@ class Statistics:
         n = 2.0
         s = 0.0
         z = self.MACHEP * ai
-        while np.abs(v) > z:
+        while abs(v) > z:
             u = (n - b) * x / n
             t *= u
             v = t / (a + n)
@@ -537,16 +537,16 @@ class Statistics:
         s += t1
         s += ai
 
-        u = a * np.log(x)
-        if ((a + b) < self.MAXGAM) and (np.abs(u) < self.MAXLOG):
+        u = a * math.log(x)
+        if ((a + b) < self.MAXGAM) and (abs(u) < self.MAXLOG):
             t = self.gamma(a + b) / (self.gamma(a) * self.gamma(b))
-            s = s * t * np.power(x, a)
+            s = s * t * math.pow(x, a)
         else:
-            t = self.lnGamma(a + b) - self.lnGamma(a) - self.lnGamma(b) + u + np.log(s)
+            t = self.lnGamma(a + b) - self.lnGamma(a) - self.lnGamma(b) + u + math.log(s)
             if (t < self.MINLOG):
                 s = 0.0
             else:
-                s = np.exp(t)
+                s = math.exp(t)
         return s
 
 if __name__ == "__main__":

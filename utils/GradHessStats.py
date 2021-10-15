@@ -1,4 +1,4 @@
-import numpy as np
+import math
 from utils.GradHess import GradHess
 import warnings
 warnings.filterwarnings("ignore")
@@ -27,8 +27,8 @@ class GradHessStats:
         n2 = stats.mObservations
 
         # Do scaled variance bit (see Wikipedia page on "Algorithms for calculating variance", section about parallel calculation)
-        self.mScaledVariance.gradient += stats.mScaledVariance.gradient + np.power(meanDiff.gradient, 2.0) * (n1 * n2) / (n1 + n2)
-        self.mScaledVariance.hessian += stats.mScaledVariance.hessian + np.power(meanDiff.hessian, 2.0) * (n1 * n2) / (n1 + n2)
+        self.mScaledVariance.gradient += stats.mScaledVariance.gradient + math.pow(meanDiff.gradient, 2.0) * (n1 * n2) / (n1 + n2)
+        self.mScaledVariance.hessian += stats.mScaledVariance.hessian + math.pow(meanDiff.hessian, 2.0) * (n1 * n2) / (n1 + n2)
         
         # Do scaled covariance bit (see "Numerically Stable, Single-Pass, Parallel Statistics Algorithms" (Bennett et al, 2009))
         self.mScaledCovariance += stats.mScaledCovariance + meanDiff.gradient * meanDiff.hessian * (n1 * n2) / (n1 + n2)
@@ -57,13 +57,13 @@ class GradHessStats:
     
     def getVariance(self):
         if self.mObservations < 2:
-            return GradHess(np.inf, np.inf)
+            return GradHess(math.inf, math.inf)
         else:
             return GradHess(self.mScaledVariance.gradient / (self.mObservations - 1), self.mScaledVariance.hessian / (self.mObservations - 1))
     
     def getCovariance(self):
         if self.mObservations < 2:
-            return np.inf
+            return math.inf
         else:
             return self.mScaledCovariance / (self.mObservations - 1)
     
@@ -72,7 +72,7 @@ class GradHessStats:
     
     def getDeltaLossMean(self, deltaPrediction):
         mean = self.getMean()
-        return deltaPrediction * mean.gradient + 0.5 * mean.hessian * np.power(deltaPrediction, 2.0)
+        return deltaPrediction * mean.gradient + 0.5 * mean.hessian * math.pow(deltaPrediction, 2.0)
     
     # This method ignores correlations between deltaPrediction and the gradients/hessians! Considering
     # deltaPredicions is derived from the gradient and hessian sample, this assumption is definitely violated.
@@ -81,10 +81,10 @@ class GradHessStats:
         variance = self.getVariance()
         covariance = self.getCovariance()
 
-        gradTermVariance = np.power(deltaPrediction, 2.0) * variance.gradient
-        hessTermVariance = 0.25 * variance.hessian * np.power(deltaPrediction, 4.0)
+        gradTermVariance = math.pow(deltaPrediction, 2.0) * variance.gradient
+        hessTermVariance = 0.25 * variance.hessian * math.pow(deltaPrediction, 4.0)
 
-        return max(0.0, gradTermVariance + hessTermVariance + np.power(deltaPrediction, 3.0) * covariance)
+        return max(0.0, gradTermVariance + hessTermVariance + math.pow(deltaPrediction, 3.0) * covariance)
     
     @staticmethod
     def combineMean(m1, n1, m2, n2):
