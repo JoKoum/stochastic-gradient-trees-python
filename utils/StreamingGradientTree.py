@@ -1,4 +1,5 @@
 import math
+from collections import deque
 import numpy as np
 from utils.Statistics import Statistics
 from utils.GradHessStats import GradHessStats
@@ -49,7 +50,7 @@ class StreamingGradientTree:
         elif self.mFeatureInfo[fid].type == 'ordinal':
             self.mRoot.mSplit.index = np.random.randint(self.mFeatureInfo[fid].categories / 2) + self.mFeatureInfo[fid].categories / 4
 
-            self.mRoot.mChildren = [] 
+            self.mRoot.mChildren = deque()
             self.mRoot.mChildren.append(self.Node(predBound * (2.0 * np.random.rand() - 1.0), 2, self.hasSplit, self))
             self.mRoot.mChildren.append(self.Node(predBound * (2.0 * np.random.rand() - 1.0), 2, self.hasSplit, self))
         
@@ -85,7 +86,7 @@ class StreamingGradientTree:
     class Node:
         def __init__(self, prediction, depth, hasSplit, tree):
         
-            self.mChildren = []
+            self.mChildren = deque()
             self.tree = tree
             self.tree.mNumNodes += 1
             
@@ -251,12 +252,12 @@ class StreamingGradientTree:
             self.mHasSplit[split.feature] = True
 
             if self.tree.mFeatureInfo[split.feature].type == 'nominal':
-                self.mChildren = []
+                self.mChildren = deque()
                 for i in range(self.tree.mFeatureInfo[split.feature].categories):
                     self.mChildren.append(self.tree.Node(self.mPrediction + split.deltaPredictions[i], self.mDepth + 1, self.mHasSplit, self.tree))
             
             elif self.tree.mFeatureInfo[split.feature].type == 'ordinal':
-                self.mChildren = []
+                self.mChildren = deque()
                 self.mChildren.append(self.tree.Node(self.mPrediction + split.deltaPredictions[0], self.mDepth + 1, self.mHasSplit, self.tree))
                 self.mChildren.append(self.tree.Node(self.mPrediction + split.deltaPredictions[1], self.mDepth + 1, self.mHasSplit, self.tree))
 
@@ -274,6 +275,6 @@ class Split:
             # lossMean and lossVariance are actually statistics of the approximation to the *change* in loss.
             self.lossMean = 0
             self.lossVariance = 0
-            self.deltaPredictions = []
+            self.deltaPredictions = deque()
             self.feature = -1
             self.index = -1
