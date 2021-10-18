@@ -1,6 +1,7 @@
 from StochasticGradientTree import StochasticGradientTreeRegressor
 
 import time
+import math
 
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_diabetes
@@ -23,6 +24,7 @@ def train(X, y):
     print('MSE: ', mean_squared_error(y_test, y_pred))
     print('MAE: ', mean_absolute_error(y_test, y_pred))
     print('R2 test: ', r2_test)
+    print('Correlation coefficient :', math.sqrt(abs(r2_test)))
 
     return tree, r2_test
 
