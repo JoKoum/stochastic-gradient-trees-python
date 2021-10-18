@@ -7,8 +7,8 @@ from utils.SquaredError import SquaredError
 
 from sklearn.base import BaseEstimator
 from sklearn.preprocessing import OrdinalEncoder, KBinsDiscretizer
-    
-class StochasticGradientTreeClassifier(BaseEstimator):
+
+class StochasticGradientTree(BaseEstimator):
     def __init__(self, bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
         self.bins = bins
         self.batch_size = batch_size
@@ -21,7 +21,7 @@ class StochasticGradientTreeClassifier(BaseEstimator):
         self.options.gracePeriod = self.batch_size
         self.options.mLambda = self.m_lambda
         self.options.gamma = self.gamma
-
+    
     def getEpochs(self):
         return self.epochs
     
@@ -87,6 +87,20 @@ class StochasticGradientTreeClassifier(BaseEstimator):
                 fx[fx.columns[i]] = self.discretizers[i].transform(fx[fx.columns[i]].values.reshape(-1,1))
                 fx[fx.columns[i]] = np.array(fx[fx.columns[i]].values, dtype=np.int64)    
         return fx
+    
+    def fit(self, X, y):
+        pass
+    
+    def predict(self, X):
+        pass
+        
+    def predict_proba(self, X):
+        pass
+
+
+class StochasticGradientTreeClassifier(StochasticGradientTree):
+    def __init__(self, bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
+        super().__init__( bins, batch_size, epochs, m_lambda, gamma)  
         
 
     def fit(self, X, y):
@@ -122,7 +136,7 @@ class StochasticGradientTreeClassifier(BaseEstimator):
     
     def predict_proba(self, X):
 
-        X, _ = self.createFeatures(X)
+        X = self.transformFeatures(X)
 
         X = X.values
 
@@ -134,7 +148,7 @@ class StochasticGradientTreeClassifier(BaseEstimator):
 
         return np.array(proba)
 
-class StochasticGradientTreeRegressor(StochasticGradientTreeClassifier):
+class StochasticGradientTreeRegressor(StochasticGradientTree):
     def __init__(self, bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
         super().__init__( bins, batch_size, epochs, m_lambda, gamma)
 

@@ -47,4 +47,16 @@ Stochastic Gradient Trees - Python
 
         tree, _ = train(X, y)
 
+### Binary classification example:
+
+    python classification_breast.py
+
+### Multiclass classification (using the [One-vs-the-rest](https://scikit-learn.org/stable/modules/generated/sklearn.multiclass.OneVsRestClassifier.html) multiclass strategy):
+
+    python classification_iris.py
+
+### Regression example:
+
+    python regression_diabetes.py
+
 [^1]: Gouk, H., Pfahringer, B., and Frank, E. Stochastic gradient trees. In Proceedings of The Eleventh Asian Conference on Machine Learning, volume 101 of Proceedings of Machine Learning Research, pp. 1094–1109. PMLR, 2019.

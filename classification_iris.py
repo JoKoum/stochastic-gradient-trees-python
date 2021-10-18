@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     start = time.process_time()
     clf.fit(X_train,y_train)
-    print('Time taken: ', time.process_time() - start)
+    print('Time taken: {}s'.format(time.process_time() - start))
     
     pred = clf.predict(X_test)
     
