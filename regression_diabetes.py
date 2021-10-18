@@ -15,7 +15,7 @@ def train(X, y):
 
     start = time.process_time()
     tree.fit(X_train, y_train)
-    print('Time taken: ', time.process_time() - start)
+    print('Time taken: {}s'.format(time.process_time() - start))
     
     y_pred = tree.predict(X_test)        
 
