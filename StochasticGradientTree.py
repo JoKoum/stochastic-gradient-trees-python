@@ -53,6 +53,11 @@ class StochasticGradientTree(BaseEstimator):
         return self.gamma
 
     def createFeatures(self, X):
+        
+        if not 'pandas' in str(type(X)):
+            import pandas as pd
+            X = pd.DataFrame(X)
+
         fx = X.copy()
 
         featureInfo = []
@@ -78,6 +83,11 @@ class StochasticGradientTree(BaseEstimator):
         return fx, featureInfo
     
     def transformFeatures(self, X):
+        
+        if not 'pandas' in str(type(X)):
+            import pandas as pd
+            X = pd.DataFrame(X)
+
         fx = X.copy()
     
         for i in range(fx.values.shape[1]):
@@ -160,7 +170,11 @@ class StochasticGradientTreeRegressor(StochasticGradientTree):
         self.mObjective = SquaredError()
 
         X = X.values
-        y = y.values
+        
+        try:
+            y = y.values
+        except:
+            pass
 
         for _ in range(self.epochs):
         

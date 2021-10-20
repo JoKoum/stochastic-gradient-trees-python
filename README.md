@@ -3,11 +3,12 @@ Stochastic Gradient Trees - Python
 
 [Stochastic Gradient Trees](https://arxiv.org/abs/1901.07777)[^1] by Henry Gouk, Bernhard Pfahringer, and Eibe Frank implementation in Python. Based on the [parer's accompanied repository](https://github.com/henrygouk/stochastic-gradient-trees) code.
 
-### Python Version 3.7
+### Python Version 3.7 or later
 
 ### Used Python libraries:
-* numpy==1.20.2
-* scikit-learn==0.24.2
+* numpy>=1.20.2
+* pandas>=1.3.3
+* scikit-learn>=0.24.2
 
 ### Usage:
 
