@@ -7,6 +7,7 @@ Stochastic Gradient Trees - Python
 
 ### Used Python libraries:
 * numpy>=1.20.2
+* scipy>=1.6.2
 * pandas>=1.3.3
 * scikit-learn>=0.24.2
 

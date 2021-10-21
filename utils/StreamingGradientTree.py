@@ -1,7 +1,7 @@
 import math
 from collections import deque
 import numpy as np
-from utils.Statistics import Statistics
+from scipy.stats import f
 from utils.GradHessStats import GradHessStats
 
 class StreamingGradientTree:
@@ -78,7 +78,7 @@ class StreamingGradientTree:
 
         try:
             F = instances * math.pow(split.lossMean, 2.0) / split.lossVariance
-            return Statistics().FProbability(F, 1, instances-1)
+            return f.pdf(F, 1, instances-1)
 
         except ArithmeticError:
             return 1.0
