@@ -13,6 +13,7 @@ Stochastic Gradient Trees - Python
 
 ### Usage:
 
+```python
     from StochasticGradientTree import StochasticGradientTreeClassifier
 
     from sklearn.model_selection import train_test_split
@@ -48,6 +49,8 @@ Stochastic Gradient Trees - Python
         X.drop(['target'], axis=1, inplace=True) 
 
         tree, _ = train(X, y)
+
+```
 
 ### Binary classification example:
 
