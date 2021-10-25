@@ -9,7 +9,10 @@ from sklearn.base import BaseEstimator
 from sklearn.preprocessing import OrdinalEncoder, KBinsDiscretizer
 
 class StochasticGradientTree(BaseEstimator):
-    def __init__(self, bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
+    def __init__(self, objective=None, bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
+
+        self.objective = objective
+
         self.bins = bins
         self.batch_size = batch_size
         self.epochs = epochs
@@ -109,16 +112,13 @@ class StochasticGradientTree(BaseEstimator):
 
 
 class StochasticGradientTreeClassifier(StochasticGradientTree):
-    def __init__(self, bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
-        super().__init__( bins, batch_size, epochs, m_lambda, gamma)  
-        
+    def __init__(self, objective=SoftmaxCrossEntropy(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
+        super().__init__(objective, bins, batch_size, epochs, m_lambda, gamma)
 
     def fit(self, X, y):
 
         X, featureInfo = self.createFeatures(X)
         self.tree = StreamingGradientTree(featureInfo, self.options)
-
-        self.mObjective = SoftmaxCrossEntropy()
 
         X = X.values
         
@@ -134,7 +134,7 @@ class StochasticGradientTreeClassifier(StochasticGradientTree):
                 pred = [self.tree.predict(x)]         
                 target = [np.float64(y[i])]
             
-                gradHess = self.mObjective.computeDerivatives(target,pred)
+                gradHess = self.objective.computeDerivatives(target,pred)
                 
                 self.tree.update(x, gradHess[0])
     
@@ -152,22 +152,20 @@ class StochasticGradientTreeClassifier(StochasticGradientTree):
 
         logits = [self.tree.predict(X[i]) for i in range(len(X))]
         
-        probs = [self.mObjective.transfer([logit]) for logit in logits]
+        probs = [self.objective.transfer([logit]) for logit in logits]
 
         proba = [[prob[1], prob[0]] for prob in probs]
 
         return np.array(proba)
 
 class StochasticGradientTreeRegressor(StochasticGradientTree):
-    def __init__(self, bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
-        super().__init__( bins, batch_size, epochs, m_lambda, gamma)
+    def __init__(self, objective=SquaredError(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
+        super().__init__(objective, bins, batch_size, epochs, m_lambda, gamma)
 
     def fit(self, X, y):
 
         X, featureInfo = self.createFeatures(X)
         self.tree = StreamingGradientTree(featureInfo, self.options)
-
-        self.mObjective = SquaredError()
 
         X = X.values
         
@@ -183,7 +181,7 @@ class StochasticGradientTreeRegressor(StochasticGradientTree):
                 pred = [self.tree.predict(x)]         
                 target = [np.float64(y[i])]
             
-                gradHess = self.mObjective.computeDerivatives(target,pred)
+                gradHess = self.objective.computeDerivatives(target,pred)
                 
                 self.tree.update(x, gradHess[0])
     
