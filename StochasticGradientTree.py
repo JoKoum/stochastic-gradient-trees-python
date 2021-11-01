@@ -128,15 +128,13 @@ class StochasticGradientTreeClassifier(StochasticGradientTree):
             pass
 
         for _ in range(self.epochs):
-        
-            for i, x in enumerate(X):
             
-                pred = [self.tree.predict(x)]         
-                target = [np.float64(y[i])]
+            pred = [self.tree.predict(x) for x in X]         
+            target = np.float64(y)
             
-                gradHess = self.objective.computeDerivatives(target,pred)
+            gradHess = self.objective.computeDerivatives(target,pred)
                 
-                self.tree.update(x, gradHess[0])
+            [self.tree.update(x, gh) for x, gh in zip(X, gradHess)]
     
     def predict(self, X):
         
@@ -175,15 +173,13 @@ class StochasticGradientTreeRegressor(StochasticGradientTree):
             pass
 
         for _ in range(self.epochs):
-        
-            for i, x in enumerate(X):
-            
-                pred = [self.tree.predict(x)]         
-                target = [np.float64(y[i])]
-            
-                gradHess = self.objective.computeDerivatives(target,pred)
                 
-                self.tree.update(x, gradHess[0])
+            pred = [self.tree.predict(x) for x in X]         
+            target = np.float64(y)
+            
+            gradHess = self.objective.computeDerivatives(target,pred)
+                
+            [self.tree.update(x, gh) for x, gh in zip(X, gradHess)]
     
     def predict(self, X):
 
