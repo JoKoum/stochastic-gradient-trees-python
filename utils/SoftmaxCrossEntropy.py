@@ -3,13 +3,13 @@ from utils.GradHess import GradHess
 
 class SoftmaxCrossEntropy:
     def computeDerivatives(self, groundTruth, raw):
-        result = [GradHess() for _ in range(len(raw))]
         predictions = self.transfer(raw)
-
-        for i in range(len(result)):
-           result[i] = GradHess(predictions[i] - groundTruth[i], predictions[i] * (1.0 - predictions[i]))
         
-        return result
+        return [
+            GradHess(
+                predictions[i] - groundTruth[i],
+                predictions[i] * (1.0 - predictions[i]))
+                for i in range(len(raw))]
     
     @staticmethod
     def transfer(raw):

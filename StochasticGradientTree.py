@@ -101,8 +101,25 @@ class StochasticGradientTree(BaseEstimator):
                 fx[fx.columns[i]] = np.array(fx[fx.columns[i]].values, dtype=np.int64)    
         return fx
     
+    def _train(self, x, y):
+
+        pred = [self.tree.predict(x)]
+        gradHess = self.objective.computeDerivatives([y], pred)
+        self.tree.update(x, gradHess[0])
+
     def fit(self, X, y):
-        pass
+
+        X, featureInfo = self.createFeatures(X)
+        self.tree = StreamingGradientTree(featureInfo, self.options)
+
+        X = X.values
+
+        try:
+            y = y.values
+        except:
+            pass
+
+        [[self._train(x, yi) for x, yi in zip(X,y)] for _ in range(self.epochs)]        
     
     def predict(self, X):
         pass
@@ -114,27 +131,7 @@ class StochasticGradientTree(BaseEstimator):
 class StochasticGradientTreeClassifier(StochasticGradientTree):
     def __init__(self, objective=SoftmaxCrossEntropy(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
         super().__init__(objective, bins, batch_size, epochs, m_lambda, gamma)
-
-    def fit(self, X, y):
-
-        X, featureInfo = self.createFeatures(X)
-        self.tree = StreamingGradientTree(featureInfo, self.options)
-
-        X = X.values
-        
-        try:
-            y = y.values
-        except:
-            pass
-
-        for _ in range(self.epochs):
-            
-            pred = [self.tree.predict(x) for x in X]         
-            target = np.float64(y)
-            
-            gradHess = self.objective.computeDerivatives(target,pred)
-                
-            [self.tree.update(x, gh) for x, gh in zip(X, gradHess)]
+        self._estimator_type = 'classifier'
     
     def predict(self, X):
         
@@ -159,27 +156,7 @@ class StochasticGradientTreeClassifier(StochasticGradientTree):
 class StochasticGradientTreeRegressor(StochasticGradientTree):
     def __init__(self, objective=SquaredError(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
         super().__init__(objective, bins, batch_size, epochs, m_lambda, gamma)
-
-    def fit(self, X, y):
-
-        X, featureInfo = self.createFeatures(X)
-        self.tree = StreamingGradientTree(featureInfo, self.options)
-
-        X = X.values
-        
-        try:
-            y = y.values
-        except:
-            pass
-
-        for _ in range(self.epochs):
-                
-            pred = [self.tree.predict(x) for x in X]         
-            target = np.float64(y)
-            
-            gradHess = self.objective.computeDerivatives(target,pred)
-                
-            [self.tree.update(x, gh) for x, gh in zip(X, gradHess)]
+        self._estimator_type = 'regressor'
     
     def predict(self, X):
 
