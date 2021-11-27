@@ -54,6 +54,11 @@ class StochasticGradientTree(BaseEstimator):
     
     def getGamma(self):
         return self.gamma
+    
+    def get_depth(self):
+        if not hasattr(self, 'tree'):
+            return 0
+        return self.tree.getDepth()
 
     def createFeatures(self, X):
         
