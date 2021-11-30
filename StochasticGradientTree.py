@@ -124,13 +124,7 @@ class StochasticGradientTree(BaseEstimator):
         except:
             pass
 
-        [[self._train(x, yi) for x, yi in zip(X,y)] for _ in range(self.epochs)]        
-    
-    def predict(self, X):
-        pass
-        
-    def predict_proba(self, X):
-        pass
+        [[self._train(x, yi) for x, yi in zip(X,y)] for _ in range(self.epochs)]
 
 
 class StochasticGradientTreeClassifier(StochasticGradientTree):
