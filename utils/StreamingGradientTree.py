@@ -108,11 +108,7 @@ class Node:
         self.mUpdateStats = GradHessStats()
         self.mInstances = 0
 
-        for i in range(len(self.tree.mFeatureInfo)):
-            self.mSplitStats[i] = [GradHessStats() for _ in range(self.tree.mFeatureInfo[i].categories)]
-                
-            for j in range(len(self.mSplitStats[i])):
-                self.mSplitStats[i][j] = GradHessStats()
+        self.mSplitStats = [[GradHessStats() for _ in range(self.tree.mFeatureInfo[i].categories)] for i in range(len(self.tree.mFeatureInfo))]
     
     def getLeaf(self, features):
         if not self.mChildren:
@@ -269,7 +265,7 @@ class Node:
             print("Unhandled attribute type")
 
         # Free up memory used by the split stats
-        self.mSplitStats = {}
+        self.mSplitStats = []
     
     def computeDeltaPrediction(self, gradHess):
         return -gradHess.gradient / (gradHess.hessian + self.tree.mOptions.mLambda + 2.225E-308)
