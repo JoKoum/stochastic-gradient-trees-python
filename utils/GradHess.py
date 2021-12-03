@@ -8,10 +8,12 @@ class GradHess:
             self.gradient = grad
             self.hessian = hess
     
-    def add(self, other):
+    def __add__(self, other):
         self.gradient += other.gradient
         self.hessian += other.hessian
+        return self
 
-    def sub(self, other):
+    def __sub__(self, other):
         self.gradient -= other.gradient
         self.hessian -= other.hessian
+        return self

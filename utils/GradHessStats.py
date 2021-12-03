@@ -21,8 +21,7 @@ class GradHessStats:
             self.mObservations = stats.mObservations
             return
         
-        meanDiff = stats.getMean()
-        meanDiff.sub(self.getMean())
+        meanDiff = stats.getMean() - self.getMean()
         n1 = self.mObservations
         n2 = stats.mObservations
 
@@ -34,12 +33,12 @@ class GradHessStats:
         self.mScaledCovariance += stats.mScaledCovariance + meanDiff.gradient * meanDiff.hessian * (n1 * n2) / (n1 + n2)
 
         # Do the other bits
-        self.mSum.add(stats.mSum)
+        self.mSum += stats.mSum
         self.mObservations += stats.mObservations
     
     def addObservation(self, gradHess):
         oldMean = self.getMean()
-        self.mSum.add(gradHess)
+        self.mSum += gradHess
         self.mObservations += 1
         newMean = self.getMean()
 
