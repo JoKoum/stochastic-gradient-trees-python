@@ -1,7 +1,7 @@
 import math
 from collections import deque
 import numpy as np
-from scipy.stats import f
+from scipy.special import betainc
 from utils.GradHessStats import GradHessStats
 
 class StreamingGradientTree:
@@ -78,10 +78,14 @@ class StreamingGradientTree:
 
         try:
             F = instances * math.pow(split.lossMean, 2.0) / split.lossVariance
-            return f.pdf(F, 1, instances-1)
+            return self._FProbability(F, 1, instances-1)
 
         except ArithmeticError:
             return 1.0
+    
+    @staticmethod
+    def _FProbability(F, df1, df2):
+        return betainc(df2/2.0, df1/2.0, df2/(df2+df1*F))
 
 class Node:
     def __init__(self, prediction, depth, hasSplit, tree):
