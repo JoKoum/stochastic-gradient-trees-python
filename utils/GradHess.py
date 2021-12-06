@@ -1,5 +1,6 @@
+from copy import deepcopy
 class GradHess:
-    def __init__(self, grad=0, hess=0, gradHess=None):
+    def __init__(self, grad=0.0, hess=0.0, *, gradHess=None):
         
         if gradHess:
             self.gradient = gradHess.gradient
@@ -8,12 +9,22 @@ class GradHess:
             self.gradient = grad
             self.hessian = hess
     
-    def __add__(self, other):
+    def __iadd__(self, other):
         self.gradient += other.gradient
         self.hessian += other.hessian
         return self
 
-    def __sub__(self, other):
+    def __isub__(self, other):
         self.gradient -= other.gradient
         self.hessian -= other.hessian
         return self
+    
+    def __add__(self, other):
+        sumObj = deepcopy(self)
+        sumObj += other
+        return sumObj
+    
+    def __sub__(self, other):
+        subObj = deepcopy(self)
+        subObj -= other
+        return subObj
