@@ -6,10 +6,9 @@ from utils.SoftmaxCrossEntropy import SoftmaxCrossEntropy
 from utils.SquaredError import SquaredError
 
 from sklearn.base import BaseEstimator
-from sklearn.preprocessing import OrdinalEncoder, KBinsDiscretizer
 
-class StochasticGradientTree(BaseEstimator):
-    def __init__(self, objective=None, bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
+class SGT:
+    def __init__(self, objective=None, bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0, upper_bounds=[], lower_bounds=[]):
 
         self.objective = objective
 
@@ -24,6 +23,16 @@ class StochasticGradientTree(BaseEstimator):
         self.options.gracePeriod = self.batch_size
         self.options.mLambda = self.m_lambda
         self.options.gamma = self.gamma
+
+        if len(upper_bounds) == 0 and len(lower_bounds) == 0:
+            self.MinMaxProvided = False
+        else:
+            self.MinMaxProvided = True
+        self.upper_bounds = upper_bounds
+        self.lower_bounds = lower_bounds
+
+        self._isFit = False
+        self._samplesSeen = 0
     
     def getEpochs(self):
         return self.epochs
@@ -60,52 +69,49 @@ class StochasticGradientTree(BaseEstimator):
             return 0
         return self.tree.getDepth()
 
+    def get_total_nodes(self):
+        if not hasattr(self, 'tree'):
+            return 1
+        return self.tree.getNumNodes()
+
     def createFeatures(self, X):
         
-        if not 'pandas' in str(type(X)):
-            import pandas as pd
-            X = pd.DataFrame(X)
+        if self._samplesSeen < 1000:
+            if not self._isFit:
+                self.features = X
+            else: 
+                self.features = np.append(self.features, X, axis=0)    
+            self._samplesSeen += X.shape[0]
 
-        fx = X.copy()
+            if not self.MinMaxProvided:
+                self.upper_bounds = np.max(self.features, axis=0)
+                self.lower_bounds = np.min(self.features, axis=0)
 
-        featureInfo = []
-        self.discretizers = {}
-        self.encoders = {}
-    
-        for i in range(fx.values.shape[1]):
-            if fx[fx.columns[i]].dtype == 'object':
-                feat = FeatureInfo('nominal', len(fx[fx.columns[i]].unique()))
-                encoder = OrdinalEncoder(dtype=np.int64)
-                fx[fx.columns[i]] = encoder.fit_transform(fx[fx.columns[i]].values.reshape(-1,1))
-                self.encoders[i] = encoder
-
-            else:
-                feat = FeatureInfo('ordinal', self.bins)
-                ds = KBinsDiscretizer(self.bins, encode='ordinal', strategy='uniform')
-                fx[fx.columns[i]] = ds.fit_transform(fx[fx.columns[i]].values.reshape(-1,1))
-                fx[fx.columns[i]] = np.array(fx[fx.columns[i]].values, dtype=np.int64)
-                self.discretizers[i] = ds
-            
-            featureInfo.append(feat)
-    
-        return fx, featureInfo
-    
-    def transformFeatures(self, X):
         
-        if not 'pandas' in str(type(X)):
-            import pandas as pd
-            X = pd.DataFrame(X)
+        if not self._isFit:
+            self.featureInfo = [FeatureInfo('nominal', len(np.unique(X[:,i]))) if 'int' in X[:,i].dtype.name else FeatureInfo('ordinal', self.bins) for i in range(X.shape[1])]
+            self.buckets = [len(np.unique(X[:,i])) if 'int' in X[:,i].dtype.name else self.bins for i in range(X.shape[1])]
+        
+        discretized = np.zeros_like(X)
 
-        fx = X.copy()
+        for i, observation in enumerate(X):
+            discretized[i,:] = self._discretize(observation)
     
-        for i in range(fx.values.shape[1]):
-            if fx[fx.columns[i]].dtype == 'object':
-                fx[fx.columns[i]] = self.encoders[i].transform(fx[fx.columns[i]].values.reshape(-1,1))
+        return discretized.astype(int)
+
+    def _discretize(self, observations):
+        '''Dicretize obervations based on the created buckets'''
+        discretized = []
+        for i in range(len(observations)):
+            if self.upper_bounds[i] == self.lower_bounds[i]:
+                scaling = 1
             else:
-                fx[fx.columns[i]] = self.discretizers[i].transform(fx[fx.columns[i]].values.reshape(-1,1))
-                fx[fx.columns[i]] = np.array(fx[fx.columns[i]].values, dtype=np.int64)    
-        return fx
-    
+                scaling = ((observations[i] - self.lower_bounds[i]) / (self.upper_bounds[i] - self.lower_bounds[i]))
+            scaled_observations = int(self.buckets[i] * scaling)
+            scaled_observations = min(self.buckets[i] - 1, max(0, scaled_observations))
+            discretized.append(scaled_observations)
+        return np.array(discretized)
+
     def _train(self, x, y):
 
         pred = [self.tree.predict(x)]
@@ -114,22 +120,33 @@ class StochasticGradientTree(BaseEstimator):
 
     def fit(self, X, y):
 
-        X, featureInfo = self.createFeatures(X)
-        self.tree = StreamingGradientTree(featureInfo, self.options)
+        if 'pandas' in str(type(X)):
+            X = X.copy().to_numpy()
 
-        X = X.values
+        X = self.createFeatures(X)
 
-        try:
-            y = y.values
-        except:
-            pass
+        if not self._isFit:
+            self.tree = StreamingGradientTree(self.featureInfo, self.options)
+
+        if 'pandas' in str(type(y)):
+            y = y.to_numpy()
 
         [[self._train(x, yi) for x, yi in zip(X,y)] for _ in range(self.epochs)]
 
+        self._isFit = True
 
-class StochasticGradientTreeClassifier(StochasticGradientTree):
-    def __init__(self, objective=SoftmaxCrossEntropy(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
-        super().__init__(objective, bins, batch_size, epochs, m_lambda, gamma)
+class SGTClassifier(SGT):
+    def __init__(self, objective=SoftmaxCrossEntropy(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0, upper_bounds=[], lower_bounds=[]):
+        super().__init__(
+            objective=objective,
+            bins=bins,
+            batch_size=batch_size,
+            epochs=epochs,
+            m_lambda=m_lambda,
+            gamma=gamma,
+            upper_bounds=upper_bounds,
+            lower_bounds=lower_bounds
+            )
         self._estimator_type = 'classifier'
     
     def predict(self, X):
@@ -140,9 +157,13 @@ class StochasticGradientTreeClassifier(StochasticGradientTree):
     
     def predict_proba(self, X):
 
-        X = self.transformFeatures(X)
+        if 'pandas' in str(type(X)):
+            X = X.copy().to_numpy()
 
-        X = X.values
+        X = self.createFeatures(X)
+
+        if not self._isFit:
+            self.tree = StreamingGradientTree(self.featureInfo, self.options)
 
         logits = [self.tree.predict(X[i]) for i in range(len(X))]
         
@@ -152,16 +173,28 @@ class StochasticGradientTreeClassifier(StochasticGradientTree):
 
         return np.array(proba)
 
-class StochasticGradientTreeRegressor(StochasticGradientTree):
-    def __init__(self, objective=SquaredError(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0):
-        super().__init__(objective, bins, batch_size, epochs, m_lambda, gamma)
+class SGTRegressor(SGT):
+    def __init__(self, objective=SquaredError(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0, upper_bounds=[], lower_bounds=[]):
+        super().__init__(
+            objective=objective,
+            bins=bins,
+            batch_size=batch_size,
+            epochs=epochs,
+            m_lambda=m_lambda,
+            gamma=gamma,
+            upper_bounds=upper_bounds,
+            lower_bounds=lower_bounds
+            )
         self._estimator_type = 'regressor'
     
     def predict(self, X):
+        if 'pandas' in str(type(X)):
+            X = X.copy().to_numpy()
+            
+        X = self.createFeatures(X)
 
-        X = self.transformFeatures(X)
-
-        X = X.values
+        if not self._isFit:
+            self.tree = StreamingGradientTree(self.featureInfo, self.options)
 
         y_pred = [self.tree.predict(X[i]) for i in range(len(X))]
         
@@ -169,3 +202,43 @@ class StochasticGradientTreeRegressor(StochasticGradientTree):
     
     def predict_proba(self, X):
         print("Not supported Regression method")
+
+class StochasticGradientTree(SGT, BaseEstimator):
+    def __init__(self, objective=None, bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1, upper_bounds=[], lower_bounds=[]):
+        super().__init__(
+            objective=objective,
+            bins=bins,
+            batch_size=batch_size,
+            epochs=epochs, 
+            m_lambda=m_lambda,
+            gamma=gamma,
+            upper_bounds=upper_bounds,
+            lower_bounds=lower_bounds
+            )
+
+class StochasticGradientTreeClassifier(StochasticGradientTree, SGTClassifier):
+    def __init__(self, objective=SoftmaxCrossEntropy(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1, upper_bounds=[], lower_bounds=[]):
+        super().__init__(
+            objective=objective,
+            bins=bins,
+            batch_size=batch_size,
+            epochs=epochs,
+            m_lambda=m_lambda,
+            gamma=gamma,
+            upper_bounds=upper_bounds,
+            lower_bounds=lower_bounds
+            )
+
+class StochasticGradientTreeRegressor(StochasticGradientTree, SGTRegressor):
+    def __init__(self, objective=SquaredError(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1, upper_bounds=[], lower_bounds=[]):
+        super().__init__(
+            objective=objective,
+            bins=bins,
+            batch_size=batch_size,
+            epochs=epochs,
+            m_lambda=m_lambda,
+            gamma=gamma,
+            upper_bounds=upper_bounds,
+            lower_bounds=lower_bounds
+            )
+    
