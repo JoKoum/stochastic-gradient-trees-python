@@ -4,7 +4,6 @@ from utils.StreamingGradientTreeOptions import StreamingGradientTreeOptions
 from utils.FeatureInfo import FeatureInfo
 from utils.SoftmaxCrossEntropy import SoftmaxCrossEntropy
 from utils.SquaredError import SquaredError
-
 from sklearn.base import BaseEstimator
 
 class SGT:
@@ -75,6 +74,11 @@ class SGT:
         return self.tree.getNumNodes()
 
     def createFeatures(self, X):
+        if hasattr(X, "dtypes") and hasattr(X, "__array__"):
+            self.dtypes = list(X.dtypes)
+            X = X.to_numpy()
+        else:
+            self.dtypes = [X.dtype for _ in range(X.shape[1])]
         
         if self._samplesSeen < 1000:
             if not self._isFit:
@@ -86,11 +90,10 @@ class SGT:
             if not self.MinMaxProvided:
                 self.upper_bounds = np.max(self.features, axis=0)
                 self.lower_bounds = np.min(self.features, axis=0)
-
         
         if not self._isFit:
-            self.featureInfo = [FeatureInfo('nominal', len(np.unique(X[:,i]))) if 'int' in X[:,i].dtype.name else FeatureInfo('ordinal', self.bins) for i in range(X.shape[1])]
-            self.buckets = [len(np.unique(X[:,i])) if 'int' in X[:,i].dtype.name else self.bins for i in range(X.shape[1])]
+            self.featureInfo = [FeatureInfo('nominal', len(np.unique(X[:,i]))) if 'int' in self.dtypes[i].name else FeatureInfo('ordinal', self.bins) for i in range(X.shape[1])]
+            self.buckets = [len(np.unique(X[:,i])) if 'int' in self.dtypes[i].name else self.bins for i in range(X.shape[1])]
         
         discretized = np.zeros_like(X)
 
@@ -113,17 +116,12 @@ class SGT:
         return np.array(discretized)
 
     def _train(self, x, y):
-
         pred = [self.tree.predict(x)]
         gradHess = self.objective.computeDerivatives([y], pred)
         self.tree.update(x, gradHess[0])
 
-    def fit(self, X, y):
-
-        if 'pandas' in str(type(X)):
-            X = X.copy().to_numpy()
-
-        X = self.createFeatures(X)
+    def fit(self, X, y):        
+        X = self.createFeatures(X)        
 
         if not self._isFit:
             self.tree = StreamingGradientTree(self.featureInfo, self.options)
@@ -149,17 +147,12 @@ class SGTClassifier(SGT):
             )
         self._estimator_type = 'classifier'
     
-    def predict(self, X):
-        
+    def predict(self, X):        
         y_pred = self.predict_proba(X)
 
         return [np.argmax(pred) for pred in y_pred]
     
     def predict_proba(self, X):
-
-        if 'pandas' in str(type(X)):
-            X = X.copy().to_numpy()
-
         X = self.createFeatures(X)
 
         if not self._isFit:
@@ -187,10 +180,7 @@ class SGTRegressor(SGT):
             )
         self._estimator_type = 'regressor'
     
-    def predict(self, X):
-        if 'pandas' in str(type(X)):
-            X = X.copy().to_numpy()
-            
+    def predict(self, X):        
         X = self.createFeatures(X)
 
         if not self._isFit:
