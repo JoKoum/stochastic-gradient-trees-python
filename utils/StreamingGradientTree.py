@@ -3,11 +3,11 @@ from scipy.special import betainc
 from utils.GradHessStats import GradHessStats
 
 class StreamingGradientTree:
-    def __init__(self, FeatureInfo, options):
+    def __init__(self, featureInfo, options):
         """
         mFeatureInfo: List of data features
         """
-        self.mFeatureInfo = FeatureInfo
+        self.mFeatureInfo = featureInfo
         self.mOptions = options
         
         self.mNumNodes = 0
@@ -111,7 +111,6 @@ class Node:
     def reset(self):
         self.mUpdateStats = GradHessStats()
         self.mInstances = 0
-
         self.mSplitStats = [[GradHessStats() for _ in range(self.tree.mFeatureInfo[i].categories)] for i in range(len(self.tree.mFeatureInfo))]
     
     def setDeltaPredictions(self, delta_prediction):

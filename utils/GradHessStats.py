@@ -86,9 +86,9 @@ class GradHessStats:
         covariance = self.getCovariance()
 
         gradTermVariance = deltaPrediction * deltaPrediction * variance.gradient
-        hessTermVariance = 0.25 * variance.hessian * deltaPrediction ** 4.0
+        hessTermVariance = 0.25 * variance.hessian * (deltaPrediction ** 4.0)
 
-        return max(0.0, gradTermVariance + hessTermVariance + deltaPrediction ** 3.0 * covariance)
+        return max(0.0, gradTermVariance + hessTermVariance + (deltaPrediction ** 3.0) * covariance)
     
     @staticmethod
     def combineMean(m1, n1, m2, n2):
