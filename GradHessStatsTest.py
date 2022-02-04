@@ -32,7 +32,7 @@ def testAdd():
     stats2.addObservation(GradHess(1.0, 1.0))
     stats2.addObservation(GradHess(1.5, 0.9))
 
-    stats1.add(stats2)
+    stats1 += stats2
 
     expected = GradHessStats()
     expected.addObservation(GradHess(0.5, 0.8))
