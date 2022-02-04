@@ -1,4 +1,3 @@
-import math
 import numpy as np
 from scipy.special import betainc
 from utils.GradHessStats import GradHessStats
@@ -19,8 +18,6 @@ class StreamingGradientTree:
         self.hasSplit = [False for _ in range(len(self.mFeatureInfo))]
         
         self.mRoot = Node(self.mOptions.initialPrediction, 1, self.hasSplit, self)
-
-        self.counter = 0
     
     def getNumNodes(self):
         return self.mNumNodes
@@ -62,6 +59,7 @@ class StreamingGradientTree:
             return
 
         bestSplit = leaf.findBestSplit()
+        leaf.setDeltaPredictions(bestSplit.deltaPredictions)
 
         p = self.computePValue(bestSplit, leaf.mInstances)
         
@@ -70,15 +68,23 @@ class StreamingGradientTree:
     
     def predict(self, features):
         return self.mRoot.getLeaf(features).predict()
+
+    def explain(self, features):
+        self.nodePath = [self.mRoot]
+        self.mRoot.traverseToLeaf(features)
+        return {f'Node {node.mDepth}':
+            {'Threshold': node.getDeltaPredictions(),
+             'Prediction': node.predict()
+             }
+            for node in self.nodePath
+        }
     
     def computePValue(self, split, instances):
         # H0: the expected loss is zero
         # HA: the expected loss is not zero
-
         try:
-            F = instances * math.pow(split.lossMean, 2.0) / split.lossVariance
+            F = instances * split.lossMean ** 2.0 / split.lossVariance
             return self._FProbability(F, 1, instances-1)
-
         except ArithmeticError:
             return 1.0
     
@@ -98,6 +104,7 @@ class Node:
         self.tree.mMaxDepth = max(self.tree.mMaxDepth, self.mDepth)
             
         self.mHasSplit = hasSplit.copy()
+        self.mDeltaPrediction = []
 
         self.reset()
     
@@ -107,6 +114,12 @@ class Node:
 
         self.mSplitStats = [[GradHessStats() for _ in range(self.tree.mFeatureInfo[i].categories)] for i in range(len(self.tree.mFeatureInfo))]
     
+    def setDeltaPredictions(self, delta_prediction):
+        self.mDeltaPrediction = delta_prediction
+
+    def getDeltaPredictions(self):
+        return self.mDeltaPrediction
+
     def getLeaf(self, features):
         if not self.mChildren:
             return self
@@ -129,14 +142,38 @@ class Node:
             else:
                 raise SystemError("Unhandled attribute type")          
             return c.getLeaf(features)
-    
+
+    def traverseToLeaf(self, features):
+        if not self.mChildren:
+            self.tree.nodePath.append(self)
+            return self
+        else:
+            featureType = self.tree.mFeatureInfo[self.mSplit.feature].type
+            c = None
+
+            if features[self.mSplit.feature] == -1:
+                c = self.mChildren[0]
+            
+            elif featureType == 'nominal':
+                c = self.mChildren[int(features[self.mSplit.feature])]
+            
+            elif featureType == 'ordinal':
+                if features[self.mSplit.feature] <= self.mSplit.index:
+                    c = self.mChildren[0]
+                else:
+                    c = self.mChildren[1]
+            
+            else:
+                raise SystemError("Unhandled attribute type")
+            if c.mChildren:
+                self.tree.nodePath.append(c)         
+            return c.traverseToLeaf(features)
+
     def update(self, features, gradHess):
         self.mInstances += 1
-
         for i in range(len(features)):
             if features[i] == -1:
-                continue
-                
+                continue    
             self.mSplitStats[i][features[i]].addObservation(gradHess)   
         self.mUpdateStats.addObservation(gradHess)
     
@@ -185,25 +222,20 @@ class Node:
                 forwardCumulativeSum = [GradHessStats() for _ in range(self.tree.mFeatureInfo[i].categories - 1)]
                 backwardCumulativeSum = [GradHessStats() for _ in range(self.tree.mFeatureInfo[i].categories - 1)]
 
-
                 # Compute the split stats for each possible split point
                 for j in range(self.tree.mFeatureInfo[i].categories - 1):
-                    forwardCumulativeSum[j] = GradHessStats()
-                    forwardCumulativeSum[j].add(self.mSplitStats[i][j])
+                    forwardCumulativeSum[j] += self.mSplitStats[i][j]
 
                     if j > 0:
-                        forwardCumulativeSum[j].add(forwardCumulativeSum[j - 1])                       
+                        forwardCumulativeSum[j] += forwardCumulativeSum[j - 1]                       
                     
-
                 for j in range(self.tree.mFeatureInfo[i].categories - 2, -1, -1):
-                    backwardCumulativeSum[j] = GradHessStats()
-                    backwardCumulativeSum[j].add(self.mSplitStats[i][j + 1])
+                    backwardCumulativeSum[j] += self.mSplitStats[i][j + 1]
 
                     if j + 1 < len(backwardCumulativeSum):
-                        backwardCumulativeSum[j].add(backwardCumulativeSum[j + 1])
+                        backwardCumulativeSum[j] += backwardCumulativeSum[j + 1]
                         
-
-                candidate.lossMean = math.inf
+                candidate.lossMean = float('inf')
                 candidate.deltaPredictions = list(np.zeros(2))
 
                 for j in range(len(forwardCumulativeSum)):
@@ -236,7 +268,6 @@ class Node:
         return best
     
     def applySplit(self, split):
-
         # Should we just update the prediction being made?
         if split.feature == -1:
             self.mPrediction += split.deltaPredictions[0]

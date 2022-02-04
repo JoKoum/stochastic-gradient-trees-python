@@ -1,5 +1,5 @@
-import math
 from utils.GradHess import GradHess
+from copy import deepcopy
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -10,24 +10,24 @@ class GradHessStats:
         self.mScaledVariance = GradHess()
         self.mScaledCovariance = 0.0
     
-    def add(self, stats):
+    def __iadd__(self, stats):
         if stats.mObservations == 0:
-            return
+            return self
         
         if self.mObservations == 0:
             self.mSum = GradHess(gradHess=stats.mSum)
             self.mScaledVariance = GradHess(gradHess=stats.mScaledVariance)
             self.mScaledCovariance = stats.mScaledCovariance
             self.mObservations = stats.mObservations
-            return
+            return self
         
         meanDiff = stats.getMean() - self.getMean()
         n1 = self.mObservations
         n2 = stats.mObservations
 
         # Do scaled variance bit (see Wikipedia page on "Algorithms for calculating variance", section about parallel calculation)
-        self.mScaledVariance.gradient += stats.mScaledVariance.gradient + math.pow(meanDiff.gradient, 2.0) * (n1 * n2) / (n1 + n2)
-        self.mScaledVariance.hessian += stats.mScaledVariance.hessian + math.pow(meanDiff.hessian, 2.0) * (n1 * n2) / (n1 + n2)
+        self.mScaledVariance.gradient += stats.mScaledVariance.gradient + (meanDiff.gradient ** 2.0) * (n1 * n2) / (n1 + n2)
+        self.mScaledVariance.hessian += stats.mScaledVariance.hessian + (meanDiff.hessian ** 2.0) * (n1 * n2) / (n1 + n2)
         
         # Do scaled covariance bit (see "Numerically Stable, Single-Pass, Parallel Statistics Algorithms" (Bennett et al, 2009))
         self.mScaledCovariance += stats.mScaledCovariance + meanDiff.gradient * meanDiff.hessian * (n1 * n2) / (n1 + n2)
@@ -35,13 +35,19 @@ class GradHessStats:
         # Do the other bits
         self.mSum += stats.mSum
         self.mObservations += stats.mObservations
+
+        return self
+
+    def __add__(self, other):
+        sumObj = deepcopy(self)
+        sumObj += other
+        return sumObj
     
     def addObservation(self, gradHess):
         oldMean = self.getMean()
         self.mSum += gradHess
         self.mObservations += 1
         newMean = self.getMean()
-
 
         self.mScaledVariance.gradient += (gradHess.gradient - oldMean.gradient) * (gradHess.gradient - newMean.gradient)
         self.mScaledVariance.hessian += (gradHess.hessian - oldMean.hessian) * (gradHess.hessian - newMean.hessian)
@@ -56,13 +62,13 @@ class GradHessStats:
     
     def getVariance(self):
         if self.mObservations < 2:
-            return GradHess(math.inf, math.inf)
+            return GradHess(float('inf'), float('inf'))
         else:
             return GradHess(self.mScaledVariance.gradient / (self.mObservations - 1), self.mScaledVariance.hessian / (self.mObservations - 1))
     
     def getCovariance(self):
         if self.mObservations < 2:
-            return math.inf
+            return float('inf')
         else:
             return self.mScaledCovariance / (self.mObservations - 1)
     
@@ -71,19 +77,18 @@ class GradHessStats:
     
     def getDeltaLossMean(self, deltaPrediction):
         mean = self.getMean()
-        return deltaPrediction * mean.gradient + 0.5 * mean.hessian * math.pow(deltaPrediction, 2.0)
+        return deltaPrediction * mean.gradient + 0.5 * mean.hessian * deltaPrediction * deltaPrediction
     
     # This method ignores correlations between deltaPrediction and the gradients/hessians! Considering
     # deltaPredicions is derived from the gradient and hessian sample, this assumption is definitely violated.
     def getDeltaLossVariance(self, deltaPrediction):
-                
         variance = self.getVariance()
         covariance = self.getCovariance()
 
-        gradTermVariance = math.pow(deltaPrediction, 2.0) * variance.gradient
-        hessTermVariance = 0.25 * variance.hessian * math.pow(deltaPrediction, 4.0)
+        gradTermVariance = deltaPrediction * deltaPrediction * variance.gradient
+        hessTermVariance = 0.25 * variance.hessian * deltaPrediction ** 4.0
 
-        return max(0.0, gradTermVariance + hessTermVariance + math.pow(deltaPrediction, 3.0) * covariance)
+        return max(0.0, gradTermVariance + hessTermVariance + deltaPrediction ** 3.0 * covariance)
     
     @staticmethod
     def combineMean(m1, n1, m2, n2):
