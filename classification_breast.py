@@ -1,5 +1,5 @@
 from StochasticGradientTree import StochasticGradientTreeClassifier
-
+import time
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_breast_cancer
 from sklearn.metrics import confusion_matrix, accuracy_score, log_loss
@@ -10,7 +10,9 @@ def train(X, y):
         
     tree = StochasticGradientTreeClassifier()
 
+    start = time.process_time()
     tree.fit(X_train, y_train)
+    print('Time taken: {}s'.format(time.process_time() - start))
     
     y_pred = tree.predict(X_test)
 
