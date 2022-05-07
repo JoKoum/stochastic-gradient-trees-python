@@ -7,7 +7,7 @@ from utils.SquaredError import SquaredError
 from sklearn.base import BaseEstimator
 
 class SGT:
-    def __init__(self, objective=None, bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0, upper_bounds=[], lower_bounds=[]):
+    def __init__(self, objective=None, bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0, upper_bounds=[], lower_bounds=[], learning_rate=1):
 
         self.objective = objective
 
@@ -32,6 +32,8 @@ class SGT:
 
         self._isFit = False
         self._samplesSeen = 0
+
+        self.lr = learning_rate
     
     def getEpochs(self):
         return self.epochs
@@ -72,6 +74,9 @@ class SGT:
         if not hasattr(self, 'tree'):
             return 1
         return self.tree.getNumNodes()
+
+    def set_learning_rate(self, lr):
+        self.lr = lr
 
     def createFeatures(self, X):
         if hasattr(X, "dtypes") and hasattr(X, "__array__"):
@@ -118,6 +123,7 @@ class SGT:
     def _train(self, x, y):
         pred = [self.tree.predict(x)]
         gradHess = self.objective.computeDerivatives([y], pred)
+        gradHess[0].gradient, gradHess[0].hessian = self.lr * gradHess[0].gradient, self.lr * gradHess[0].hessian
         self.tree.update(x, gradHess[0])
 
     def fit(self, X, y):        
@@ -134,7 +140,7 @@ class SGT:
         self._isFit = True
 
 class SGTClassifier(SGT):
-    def __init__(self, objective=SoftmaxCrossEntropy(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0, upper_bounds=[], lower_bounds=[]):
+    def __init__(self, objective=SoftmaxCrossEntropy(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0, upper_bounds=[], lower_bounds=[], learning_rate=1):
         super().__init__(
             objective=objective,
             bins=bins,
@@ -143,7 +149,8 @@ class SGTClassifier(SGT):
             m_lambda=m_lambda,
             gamma=gamma,
             upper_bounds=upper_bounds,
-            lower_bounds=lower_bounds
+            lower_bounds=lower_bounds,
+            learning_rate=learning_rate
             )
         self._estimator_type = 'classifier'
     
@@ -167,7 +174,7 @@ class SGTClassifier(SGT):
         return np.array(proba)
 
 class SGTRegressor(SGT):
-    def __init__(self, objective=SquaredError(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0, upper_bounds=[], lower_bounds=[]):
+    def __init__(self, objective=SquaredError(), bins=64, batch_size=200, epochs=20, m_lambda=0.1, gamma=1.0, upper_bounds=[], lower_bounds=[], learning_rate=1):
         super().__init__(
             objective=objective,
             bins=bins,
@@ -176,7 +183,8 @@ class SGTRegressor(SGT):
             m_lambda=m_lambda,
             gamma=gamma,
             upper_bounds=upper_bounds,
-            lower_bounds=lower_bounds
+            lower_bounds=lower_bounds,
+            learning_rate = learning_rate
             )
         self._estimator_type = 'regressor'
     
