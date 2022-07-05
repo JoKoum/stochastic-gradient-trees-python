@@ -1,10 +1,10 @@
-from StochasticGradientTree import StochasticGradientTreeClassifier
+from pysgt.StochasticGradientTree import StochasticGradientTreeClassifier
 
 import time
 
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
-from utils.OneVsRestClassifier import OneVsRestClassifier
+from pysgt.utils.OneVsRestClassifier import OneVsRestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix
 
 if __name__ == '__main__':

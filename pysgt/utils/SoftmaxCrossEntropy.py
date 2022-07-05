@@ -1,5 +1,5 @@
 import numpy as np
-from utils.GradHess import GradHess
+from .GradHess import GradHess
 
 class SoftmaxCrossEntropy:
     def computeDerivatives(self, groundTruth, raw):

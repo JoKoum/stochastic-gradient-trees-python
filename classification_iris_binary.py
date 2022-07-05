@@ -1,6 +1,6 @@
 import numpy as np
 
-from StochasticGradientTree import StochasticGradientTreeClassifier
+from pysgt.StochasticGradientTree import StochasticGradientTreeClassifier
 
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris

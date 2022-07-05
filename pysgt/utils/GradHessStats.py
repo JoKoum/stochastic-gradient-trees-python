@@ -1,4 +1,4 @@
-from utils.GradHess import GradHess
+from .GradHess import GradHess
 from copy import deepcopy
 import warnings
 warnings.filterwarnings("ignore")

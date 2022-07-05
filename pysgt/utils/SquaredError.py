@@ -1,5 +1,4 @@
-from utils.GradHess import GradHess
-import numpy as np
+from .GradHess import GradHess
 
 class SquaredError:
     @staticmethod

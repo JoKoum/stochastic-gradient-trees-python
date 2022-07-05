@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.special import betainc
-from utils.GradHessStats import GradHessStats
+from .GradHessStats import GradHessStats
 
 class StreamingGradientTree:
     def __init__(self, featureInfo, options):

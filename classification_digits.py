@@ -1,4 +1,4 @@
-from StochasticGradientTree import StochasticGradientTreeClassifier
+from pysgt.StochasticGradientTree import StochasticGradientTreeClassifier
 
 import time
 

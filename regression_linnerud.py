@@ -1,4 +1,4 @@
-from StochasticGradientTree import StochasticGradientTreeRegressor
+from pysgt.StochasticGradientTree import StochasticGradientTreeRegressor
 
 import time
 import pandas as pd

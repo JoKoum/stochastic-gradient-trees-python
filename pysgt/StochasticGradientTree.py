@@ -1,9 +1,9 @@
 import numpy as np
-from utils.StreamingGradientTree import StreamingGradientTree
-from utils.StreamingGradientTreeOptions import StreamingGradientTreeOptions
-from utils.FeatureInfo import FeatureInfo
-from utils.SoftmaxCrossEntropy import SoftmaxCrossEntropy
-from utils.SquaredError import SquaredError
+from .utils.StreamingGradientTree import StreamingGradientTree
+from .utils.StreamingGradientTreeOptions import StreamingGradientTreeOptions
+from .utils.FeatureInfo import FeatureInfo
+from .utils.SoftmaxCrossEntropy import SoftmaxCrossEntropy
+from .utils.SquaredError import SquaredError
 from sklearn.base import BaseEstimator
 
 class SGT:
