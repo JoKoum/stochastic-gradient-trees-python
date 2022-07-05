@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="pysgt",
-    version="1.0.1",
+    version="1.0.2",
     description="Stochastic Gradient Trees implementation in Python",
     long_description="Stochastic Gradient Trees by Henry Gouk, Bernhard Pfahringer, and Eibe Frank implementation in Python. Based on the parer's accompanied repository code.",
     url="https://github.com/JoKoum/stochastic-gradient-trees-python",
