@@ -78,6 +78,9 @@ class SGT:
     def set_learning_rate(self, lr):
         self.lr = lr
 
+    def is_fit(self):
+        return self._isFit
+
     def createFeatures(self, X):
         if hasattr(X, "dtypes") and hasattr(X, "__array__"):
             self.dtypes = list(X.dtypes)
